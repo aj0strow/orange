@@ -6,11 +6,12 @@ import (
 	"bytes"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
 
-const Version = "0.0.1"
+const Version = "0.0.2"
 
 // Accept sets the HTTP Accept-Ranges response header.
 func Accept(w http.ResponseWriter, props ...string) {
@@ -55,22 +56,17 @@ type Range struct {
 // String encodes a Range struct into the HTTP header format.
 func (r *Range) String() string {
 	var buf bytes.Buffer
-	buf.WriteString(r.Sort)
-
-	if len(r.Start)+len(r.End) > 0 {
-		buf.WriteRune(' ')
-	}
+	buf.WriteString(url.QueryEscape(r.Sort))
+	buf.WriteRune(' ')
 	if len(r.Start) > 0 {
 		if r.StartExclusive {
 			buf.WriteRune('~')
 		}
-		buf.WriteString(r.Start)
+		buf.WriteString(url.QueryEscape(r.Start))
 	}
-	if len(r.Start)+len(r.End) > 0 {
-		buf.WriteString("..")
-	}
+	buf.WriteString("..")
 	if len(r.End) > 0 {
-		buf.WriteString(r.End)
+		buf.WriteString(url.QueryEscape(r.End))
 	}
 	buf.WriteRune(';')
 	opts := []string{}
@@ -106,23 +102,37 @@ func parseRange(s string) (*Range, error) {
 	scanner := bufio.NewReader(strings.NewReader(s))
 	prop, err := scanner.ReadString(';')
 	if err != nil {
-		return nil, err
+		return nil, InvalidFormat
 	}
 	prop = strings.TrimSuffix(prop, ";")
 	p, err := parseProperty(prop)
 	if err != nil {
 		return nil, err
 	}
-	r.Sort = p.sort
+	r.Sort, err = url.QueryUnescape(p.sort)
+	if err != nil {
+		return nil, err
+	}
 	if len(p.start) > 0 {
 		if p.start[0] == '~' {
-			r.Start = p.start[1:]
+			r.Start, err = url.QueryUnescape(p.start[1:])
+			if err != nil {
+				return nil, err
+			}
 			r.StartExclusive = true
 		} else {
-			r.Start = p.start
+			r.Start, err = url.QueryUnescape(p.start)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	r.End = p.end
+	if len(p.end) > 0 {
+		r.End, err = url.QueryUnescape(p.end)
+		if err != nil {
+			return nil, err
+		}
+	}
 	opts, err := scanner.ReadString(';')
 	if err != nil {
 		return r, nil

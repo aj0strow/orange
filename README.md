@@ -21,10 +21,10 @@ r := orange.Range{
 }
 r.String() == "name ~g..; max=200;"
 
-orange.ParseString(r.String()) == range
+r == orange.ParseString(r.String())
 ```
 
-Get the next range by passing in the last value.
+Get the next range by passing in the last value of the current result set.
 
 ```go
 r := orange.ParseString("age ..; max=10,order=desc;")
@@ -76,7 +76,7 @@ Range: name z..a; order=desc;
 Range: name ~g..z; order=asc;
 
 # Exclusive start after "g" and limit to 50 records.
-Range: name ~g..; limit=50;
+Range: name ~g..; max=50;
 ```
 
 ### Response
@@ -90,10 +90,10 @@ Accept-Range: name, updated_at
 If the entire range is returned, the response status should be `200 Ok`. For partial results the response status should be `206 Partial Content` (hey [Seattle](https://en.wikipedia.org/wiki/Area_code_206) 👋) and include a `Next-Range` header. 
 
 ```
-Next-Range: name ~g..; limit=50;
+Next-Range: name ~g..; max=50;
 ```
 
-For example, let's load a list of your friends alphabetically. You're very good looking and popular, so it's going to take several requests. 
+For example, let's load a list of friends alphabetically. You're really good looking and popular, so it's going to take several requests. 
 
 ```
 GET /friends
@@ -103,12 +103,12 @@ Range: name ..; max=200;
 ```
 206 Partial Content
 Accept-Range: name, age
-Next-Range: name ~Joey%20Tribbiani..; max=200;
+Next-Range: name ~Joey+Tribbiani..; max=200;
 ```
 
 ```
 GET /friends
-Range: name ~Joey%20Tribbiani..; max=200;
+Range: name ~Joey+Tribbiani..; max=200;
 ```
 
 ```
