@@ -1,9 +1,25 @@
 package orange
 
 import (
+	"net/http"
 	"reflect"
 	"testing"
 )
+
+func TestFromXRange(t *testing.T) {
+	req, err := http.NewRequest("GET", "/items", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-Range", "name ..;")
+	r, err := From(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Sort != "name" {
+		t.Fatalf("wrong sort name: %s", r.Sort)
+	}
+}
 
 func TestRoundTrip(t *testing.T) {
 	tests := []string{

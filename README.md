@@ -79,6 +79,8 @@ Range: name ~g..z; order=asc;
 Range: name ~g..; max=50;
 ```
 
+Some libraries like Microsoft C# restrict the range header to byte sequences. In that case use the `X-Range` header instead. 
+
 ### Response
 
 Each response should include the `Accept-Range` header, which specifies which sort properties are supported.

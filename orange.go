@@ -28,6 +28,9 @@ func Next(w http.ResponseWriter, r *Range) {
 func From(r *http.Request) (*Range, error) {
 	s := r.Header.Get("Range")
 	if s == "" {
+		s = r.Header.Get("X-Range")
+	}
+	if s == "" {
 		return &Range{}, nil
 	}
 	return ParseString(s)
